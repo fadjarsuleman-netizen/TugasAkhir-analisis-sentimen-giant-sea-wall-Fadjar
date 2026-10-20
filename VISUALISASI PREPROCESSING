@@ -1,0 +1,122 @@
+import pandas as pd
+import numpy as np
+from PIL import Image
+from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+import matplotlib.pyplot as plt
+
+# Buat stopwords tambahan
+stopwords = set(STOPWORDS)
+stopwords.update(['https', 'co', 'RT', '...', 'amp', 'lu','jokowi'])
+
+# WordCloud Before
+text_before = ' '.join(
+    df['text']
+    .astype(str)
+    .tolist()
+)
+
+wc_before = WordCloud(
+    stopwords=stopwords,
+    background_color="white",
+    max_words=200,
+    width=800,
+    height=400
+).generate(text_before)
+
+# WordCloud After (dari kolom 'stopword removal')
+text_after = ' '.join(
+    [" ".join(eval(x) if isinstance(x, str) and x.startswith('[') else x.split())
+     for x in df['steming_data'].astype(str)]
+)
+
+wc_after = WordCloud(
+    stopwords=stopwords,
+    background_color="white",
+    max_words=200,
+    width=800,
+    height=400
+).generate(text_after)
+
+# Visualisasi side-by-side
+plt.figure(figsize=(16, 8))
+
+plt.subplot(1, 2, 1)
+plt.imshow(wc_before, interpolation='bilinear')
+plt.axis("off")
+plt.title("Before Preprocessing", fontsize=18)
+
+plt.subplot(1, 2, 2)
+plt.imshow(wc_after, interpolation='bilinear')
+plt.axis("off")
+plt.title("After Preprocessing", fontsize=18)
+
+plt.tight_layout()
+plt.show()
+
+
+# ================================================================
+
+import matplotlib.pyplot as plt
+from collections import Counter
+from wordcloud import STOPWORDS
+import re
+
+# Set stopwords tambahan
+stopwords = set(STOPWORDS)
+stopwords.update(['https', 'co', 'RT', '...', 'amp', 'lu'])
+custom_stopwords = [
+    'ih','pinter','pinterrr','banget',
+    'kk','kak','kaka','kakak',
+    'kka','kkaa','kkaasekarang',
+    'anjay','wkwk','wk','haha','hehe'
+]
+# Fungsi helper untuk membersihkan tanda kutip, [ ], , dll
+def clean_text_column(series):
+    cleaned = []
+    for text in series.astype(str):
+        # Hapus [ ], tanda petik tunggal/ganda, koma
+        text = re.sub(r"[\[\]\'\",]", "", text)
+        cleaned.append(text.strip())
+    return " ".join(cleaned)
+
+# BEFORE
+all_text_before = clean_text_column(df["text"])
+words_before = all_text_before.split()
+filtered_words_before = [word for word in words_before if word.lower() not in stopwords]
+word_counts_before = Counter(filtered_words_before)
+top_words_before = word_counts_before.most_common(10)
+word_before, count_before = zip(*top_words_before)
+
+# AFTER
+all_text_after = clean_text_column(df["steming_data"])
+words_after = all_text_after.split()
+filtered_words_after = [word for word in words_after if word.lower() not in stopwords]
+word_counts_after = Counter(filtered_words_after)
+top_words_after = word_counts_after.most_common(10)
+word_after, count_after = zip(*top_words_after)
+
+# Plot berdampingan
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+# BEFORE Plot
+colors_before = plt.cm.Pastel1(range(len(word_before)))
+bars1 = axes[0].bar(word_before, count_before, color=colors_before)
+axes[0].set_title("Frekuensi Kata Sebelum Preprocessing", fontsize=14, fontweight='bold')
+axes[0].set_xlabel("Kata", fontsize=12)
+axes[0].set_ylabel("Jumlah", fontsize=12)
+axes[0].tick_params(axis='x', rotation=45)
+for bar, count in zip(bars1, count_before):
+    axes[0].text(bar.get_x() + bar.get_width()/2, count + 1, str(count), ha='center')
+
+# AFTER Plot
+colors_after = plt.cm.Pastel2(range(len(word_after)))
+bars2 = axes[1].bar(word_after, count_after, color=colors_after)
+axes[1].set_title("Frekuensi Kata Setelah Preprocessing", fontsize=14, fontweight='bold')
+axes[1].set_xlabel("Kata", fontsize=12)
+axes[1].set_ylabel("Jumlah", fontsize=12)
+axes[1].tick_params(axis='x', rotation=45)
+for bar, count in zip(bars2, count_after):
+    axes[1].text(bar.get_x() + bar.get_width()/2, count + 1, str(count), ha='center')
+
+plt.tight_layout()
+plt.show()
