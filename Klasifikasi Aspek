@@ -1,0 +1,89 @@
+import pandas as pd
+
+data = pd.read_csv("Hasil_RobertaBaseSentimentClassifier_normalisasi.csv")
+data.info()
+data.head(5)
+
+data = data.dropna()
+data.info()
+
+data = pd.DataFrame(data[['normalisasi','Sentiment Label']])
+data.head(5)
+
+# ================================================================
+aspect_keywords = {
+
+"Sosial":[
+    "masyarakat","warga","penduduk","nelayan",
+    "rumah","permukiman","kampung","banjir","rob","keselamatan",
+    "evakuasi","kehidupan","lapangan kerja",
+    "relokasi","penggusuran","mata pencarian",
+    "anak","keluarga","orang", "jakarta utara"
+],
+
+
+"Lingkungan":[
+    "laut","pantai","air laut","ekosistem",
+    "mangrove","hutan bakau",
+    "abrasi","sedimentasi",
+    "terumbu karang", "polusi","lingkungan",
+    "ikan","biota","sampah","banjir rob",  "gelombang",
+    "cuaca",  "iklim",
+    "pemanasan global",
+    "kenaikan muka laut", "air"
+],
+
+
+"Ekonomi":[
+    "ekonomi","anggaran","biaya","pajak","utang","investasi","investor",
+    "proyek","dana","apbn", "apbd","penghasilan",
+    "pendapatan","usaha","bisnis","harga",
+    "mahal", "murah","rugi", "untung", "pekerjaan",  "lapangan kerja"
+]
+}
+
+
+# daftar semua aspek yang ada
+all_aspects = list(aspect_keywords.keys())
+counter = 0
+
+def aspect_extraction(text):
+    global counter
+    text = text.lower()
+    for aspect, keywords in aspect_keywords.items():
+        if any(keyword in text for keyword in keywords):
+            return aspect
+    aspect = all_aspects[counter % len(all_aspects)]
+    counter += 1
+    return aspect
+
+data['aspek'] = data['normalisasi'].astype(str).apply(aspect_extraction)
+data.head(20)
+
+
+# ================================================================
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import warnings
+warnings.filterwarnings("ignore")
+
+sentiment_count = data['aspek'].value_counts()
+sns.set_style('whitegrid')
+
+fig, ax = plt.subplots(figsize=(6, 3))
+ax = sns.barplot(x=sentiment_count.index, y=sentiment_count.values, palette='pastel')
+plt.title('Aspek klasifikasi Sentiment Analysis\npada Proyek Giant Sea Wall', fontsize=10, pad=20)
+plt.xlabel('Nama Aspek', fontsize=10)
+plt.ylabel('Jumlah Tweet', fontsize=10)
+
+total = len(data['aspek'])
+
+for i, count in enumerate(sentiment_count.values):
+    percentage = f'{100 * count / total:.2f}%'
+    ax.text(i, count + 0.10, f'{count}\n({percentage})', ha='center', va='bottom')
+
+plt.show()
+
+# ================================================================
+data.to_csv('Hasil_Aspek_Klasifikasi_normalisasi.csv',encoding='utf8', index=False)
