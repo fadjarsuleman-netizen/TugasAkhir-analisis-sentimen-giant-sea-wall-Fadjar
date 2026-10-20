@@ -1,0 +1,31 @@
+#hapus komentar yang hanya angka
+df = df[~df['steming_data'].str.fullmatch(r'\d+')]
+
+#hapus komentar yang satu huruf
+df = df[df['steming_data'].str.len() > 5]
+
+kata_kunci = [
+    'giant',
+    'sea',
+    'wall',
+    'jakarta',
+    'laut',
+    'banjir',
+    'tanggul',
+    'proyek',
+    'rob',
+    'pantai',
+    'mangrove',
+    'nelayan',
+    'ekonomi',
+    'lingkungan',
+    'reklamasi'
+]
+
+pattern = '|'.join(kata_kunci)
+
+df = df[df['steming_data'].str.contains(pattern, case=False, na=False)]
+# ================================================================
+print("Jumlah data setelah filtering :", len(df))
+
+df_freq.head(100)
