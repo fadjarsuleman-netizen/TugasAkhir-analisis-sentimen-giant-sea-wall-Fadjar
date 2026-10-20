@@ -1,0 +1,61 @@
+import pandas as pd
+import requests
+from io import BytesIO
+
+# Fungsi penggantian kata tidak baku
+def replace_taboo_words(text, kamus_tidak_baku):
+    if isinstance(text, str):
+        words = text.split()
+        replaced_words = []
+        kalimat_baku = []
+        kata_diganti = []
+        kata_tidak_baku_hash = []
+
+        for word in words:
+            if word in kamus_tidak_baku:
+                baku_word = kamus_tidak_baku[word]
+                if isinstance(baku_word, str) and all(char.isalpha() for char in baku_word):
+                    replaced_words.append(baku_word)
+                    kalimat_baku.append(baku_word)
+                    kata_diganti.append(word)
+                    kata_tidak_baku_hash.append(hash(word))
+            else:
+                replaced_words.append(word)
+        replaced_text = ' '.join(replaced_words)
+    else:
+        replaced_text = ''
+        kalimat_baku = []
+        kata_diganti = []
+        kata_tidak_baku_hash = []
+
+    return replaced_text, kalimat_baku, kata_diganti, kata_tidak_baku_hash
+
+# Baca dataset kamu (pastikan df sudah tersedia)
+data = pd.DataFrame(df[['text','cleaning','case_folding']])
+data.head()
+
+#mempersiapkan proses normalisasi kata tidak baku pada komentar TikTok. Fungsi replace_taboo_words() bekerja dengan memeriksa setiap kata dalam teks,
+#kemudian mencocokkannya dengan kamus_tidak_baku yang berisi pasangan kata tidak baku dan bentuk bakunya.
+#Jika ditemukan kata tidak baku, kata tersebut akan diganti dengan bentuk baku dan dicatat dalam beberapa variabel, yaitu kalimat_baku untuk menyimpan kata hasil penggantian,
+#kata_diganti untuk mencatat kata yang telah diganti, dan kata_tidak_baku_hash untuk menyimpan nilai hash dari kata tidak baku.
+#Sementara itu, data = pd.DataFrame(df[['text','cleaning','case_folding']]) digunakan untuk membuat DataFrame baru yang hanya mengambil tiga kolom, yaitu teks asli (text),
+#teks hasil cleaning (cleaning), dan teks hasil case folding (case_folding).
+#Data tersebut kemudian ditampilkan menggunakan data.head() untuk memastikan struktur dan isi data sebelum dilakukan proses normalisasi kata tidak baku.
+
+# Unduh dan baca kamus dari GitHub
+url = "https://github.com/analysisdatasentiment/kamus_kata_baku/raw/main/kamuskatabaku.xlsx"
+response = requests.get(url)
+file_excel = BytesIO(response.content)
+kamus_data = pd.read_excel(file_excel)
+# ================================================================
+# Buat dictionary dari kamus
+kamus_tidak_baku_dict = dict(zip(kamus_data['tidak_baku'], kamus_data['kata_baku']))
+# ================================================================
+# Terapkan fungsi normalisasi
+data[['normalisasi', 'Kata_Baku', 'Kata_Tidak_Baku', 'Kata_Tidak_Baku_Hash']] = data['case_folding'].apply(
+    lambda x: pd.Series(replace_taboo_words(x, kamus_tidak_baku_dict))
+)
+
+# Ambil kolom yang relevan
+df = pd.DataFrame(data[['text','cleaning','case_folding','normalisasi']])
+df.head(5)
