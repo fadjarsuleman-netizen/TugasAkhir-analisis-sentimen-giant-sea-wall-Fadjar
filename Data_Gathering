@@ -1,0 +1,42 @@
+# Prepare the Actor input
+run_input = {
+    "commentsPerPost": 749,
+    "excludePinnedPosts": False,
+    "maxRepliesPerComment": 0,
+    "postURLs": [
+        "https://vt.tiktok.com/ZSXMrfN55/",
+        "https://vt.tiktok.com/ZSXMrXMKx/",
+        "https://vt.tiktok.com/ZSXMr4QV4/",
+        "https://vt.tiktok.com/ZSXMh8Qx/",
+        "https://vt.tiktok.com/ZSXMrcmNY/",
+        "https://vt.tiktok.com/ZSXMhFnqm/",
+        "https://vt.tiktok.com/ZSXMhjWd8/",
+        "https://vt.tiktok.com/ZSXMhR1RK/",
+        "https://vt.tiktok.com/ZSXMhDJjV/",
+        "https://vt.tiktok.com/ZSXMrccB2/",
+        "https://vt.tiktok.com/ZSXMh2rqd/",
+        "https://vt.tiktok.com/ZSXMhkd59/",
+    ],
+    "resultsPerPage": 100
+}
+# Run the Actor and wait for it to finish
+run = client.actor("BDec0oyAmCm1QbMEI").call(run_input=run_input)
+# Jalankan Actor
+# ================================================================
+print("Menjalankan Apify Actor... Mohon tunggu beberapa menit.")
+run = client.actor("BDec0oyAmCm1QbMEI").call(run_input=run_input)
+# ================================================================
+!pip install apify-client pandas
+from apify_client import ApifyClient
+import pandas as pd
+# ================================================================
+import pandas as pd
+data = pd.read_csv("/content/sample_data/hasil_tiktok_comments_giantseawall_fadjar.csv")
+data.info()
+data.head(5)
+#membaca dan melakukan pemeriksaan awal terhadap dataset
+# ================================================================
+data.head(5)
+# ================================================================
+df  = pd.DataFrame(data[['text']])
+df.head(5)
