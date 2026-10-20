@@ -1,0 +1,15 @@
+df.to_csv('Hasil_Preprocessing_Data.csv',encoding='utf8', index=False);
+df.info()
+df.head()
+
+# ================================================================
+import pandas as pd
+from transformers import pipeline
+from tqdm import tqdm
+
+data = pd.read_csv("Hasil_Preprocessing_Data.csv")
+data.info()
+data.head(5)
+# ================================================================
+data = data.dropna()
+data.info()
