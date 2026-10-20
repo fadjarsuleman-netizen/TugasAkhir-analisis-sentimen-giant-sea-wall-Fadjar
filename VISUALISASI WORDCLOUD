@@ -1,0 +1,64 @@
+!pip install wordcloud
+
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+# ================================================================
+import pandas as pd
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud, STOPWORDS
+
+# 1. Load classification results
+data_sentiment = pd.read_csv('Hasil_Aspek_Klasifikasi_normalisasi.csv')
+
+# 2. Load stemming column from preprocessed data to fix the missing 'steming_data' key
+df_preprocessed = pd.read_csv('Hasil_Preprocessing_Data.csv')
+
+# 3. Merge them together on the original text or index
+data = pd.merge(data_sentiment, df_preprocessed[['normalisasi', 'steming_data']], on='normalisasi', how='inner')
+
+# Define standard stopwords
+stopwords = set(STOPWORDS)
+stopwords.update(['https', 'co', 'RT', '...', 'amp', 'lu', 'jokowi', 'giant', 'sea', 'wall'])
+
+# Helper function to display word clouds safely
+def show_wordcloud(dataframe, group_col, group_value, title, colormap):
+    # Filter data based on selected column value
+    filtered_data = dataframe[dataframe[group_col] == group_value]
+
+    # Combine all stemming data
+    text_combined = ' '.join(filtered_data['steming_data'].dropna().astype(str))
+
+    if not text_combined.strip():
+        print(f"Tidak ada data untuk {group_value} di kolom {group_col}.")
+        return
+
+    # Generate WordCloud
+    wc = WordCloud(
+        stopwords=stopwords,
+        background_color='white',
+        colormap=colormap,
+        width=800,
+        height=400,
+        max_words=150
+    ).generate(text_combined)
+
+    # Plot
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wc, interpolation='bilinear')
+    plt.axis('off')
+    plt.title(title, fontsize=16, fontweight='bold')
+    plt.show()
+
+# Test generating WordCloud for Positive Sentiment
+show_wordcloud(data, 'Sentiment Label', 'Positif', 'WordCloud Sentimen Positif', 'Greens')
+# ================================================================
+# Generate WordCloud for Negative Sentiment
+show_wordcloud(data, 'Sentiment Label', 'Negatif', 'WordCloud Sentimen Negatif', 'Oranges')
+# Generate WordCloud for Netral Sentiment
+show_wordcloud(data, 'Sentiment Label', 'Netral', 'WordCloud Sentimen Netral', 'Blues')
+# Generate WordCloud untuk Aspek Sosial
+show_wordcloud(data, 'aspek', 'Sosial', 'WordCloud Aspek Sosial', 'Purples')
+# Generate WordCloud untuk Aspek Lingkungan
+show_wordcloud(data, 'aspek', 'Lingkungan', 'WordCloud Aspek Lingkungan', 'YlGn')
+# Generate WordCloud untuk Aspek Ekonomi
+show_wordcloud(data, 'aspek', 'Ekonomi', 'WordCloud Aspek Ekonomi', 'YlOrRd')
