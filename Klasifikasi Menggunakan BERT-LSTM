@@ -1,0 +1,65 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+class BERT_LSTM(nn.Module):
+
+    def __init__(
+        self,
+        input_dim=768,
+        hidden_dim=256,
+        num_layers=2,
+        num_classes=3,
+        dropout=0.5,
+        bidirectional=True
+    ):
+
+        super(BERT_LSTM, self).__init__()
+        self.bidirectional = bidirectional
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+
+        # BiLSTM
+        self.lstm = nn.LSTM(
+            input_size=input_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            batch_first=True,
+            bidirectional=bidirectional,
+            dropout=dropout if num_layers > 1 else 0
+        )
+        lstm_output = hidden_dim * 2 if bidirectional else hidden_dim
+        # Layer Normalization
+        self.layer_norm = nn.LayerNorm(lstm_output)
+        # Fully Connected
+        self.fc1 = nn.Linear(lstm_output,128)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(dropout)
+        self.fc2 = nn.Linear(128,num_classes)
+
+    def forward(self,x):
+        if x.dim()==2:
+            x=x.unsqueeze(1)
+        lstm_out,(h,c)=self.lstm(x)
+        if self.bidirectional:
+            final_hidden=torch.cat((h[-2],h[-1]),dim=1)
+        else:
+            final_hidden=h[-1]
+        out=self.layer_norm(final_hidden)
+        out=self.fc1(out)
+        out=self.relu(out)
+        out=self.dropout(out)
+        out=self.fc2(out)
+        return out
+
+#=====================================================================
+
+model = BERT_LSTM(input_dim=bert_model.config.hidden_size, num_classes=len(np.unique(y_raw))).to(device)
+print(model)
+
+#=====================================================================
+dummy = torch.randn(4, 768).to(device)
+
+output = model(dummy)
+
+print(output.shape)
