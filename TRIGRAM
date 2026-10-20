@@ -1,0 +1,142 @@
+data = data.dropna()
+data.info()
+
+data = pd.DataFrame(data[['normalisasi','Sentiment Label']])
+data.head(11)
+
+import matplotlib.pyplot as plt
+from collections import Counter
+from sklearn.feature_extraction.text import CountVectorizer, ENGLISH_STOP_WORDS
+
+# Stopwords tambahan (bisa disesuaikan)
+custom_stopwords = set(ENGLISH_STOP_WORDS)
+custom_stopwords.update(
+    ['https', 'co', 'rt', '...', 'amp', 'lu', 'deh', 'allahuakbar']
+)
+
+# Gabungan stopword
+stopword_all = custom_stopwords
+
+# Fungsi membersihkan teks dari stopword
+def clean_text(text, stopwords):
+    words = text.split()
+    words = [w for w in words if w.lower() not in stopwords]
+    return " ".join(words)
+
+# Fungsi ambil n-gram
+def get_top_ngrams(corpus, n=3, top_k=10, stopwords=None):
+    # Bersihin korpus dari stopword
+    cleaned_corpus = [clean_text(doc, stopwords) for doc in corpus]
+
+    vec = CountVectorizer(ngram_range=(n, n)).fit(cleaned_corpus)
+    bag_of_words = vec.transform(cleaned_corpus)
+    sum_words = bag_of_words.sum(axis=0).A1
+    words_freq = [(word, sum_words[idx]) for word, idx in vec.vocabulary_.items()] # Corrected line
+    words_freq = sorted(words_freq, key=lambda x: x[1], reverse=True)
+    return words_freq[:top_k]
+
+# Fungsi buat plot
+def plot_ngrams(corpus, sentiment_label, color_map=plt.cm.Set2, stopwords=None):
+    top_ngrams = get_top_ngrams(corpus, n=3, top_k=10, stopwords=stopwords)
+    if not top_ngrams:
+        print(f"Tidak ada trigram untuk sentimen {sentiment_label}")
+        return
+
+    ngrams, counts = zip(*top_ngrams)
+    colors = color_map(range(len(ngrams)))
+
+    plt.figure(figsize=(10,6))
+    bars = plt.barh(ngrams, counts, color=colors)
+    plt.gca().invert_yaxis()
+    plt.title(f"Top 10 Trigram - Sentimen {sentiment_label}", fontsize=16, fontweight='bold')
+    plt.xlabel("Jumlah Kemunculan", fontsize=12)
+    plt.ylabel("Trigram", fontsize=12)
+
+    # Tambahkan angka di ujung bar
+    for bar, num in zip(bars, counts):
+        plt.text(num + 0.01, bar.get_y() + bar.get_height()/2,
+                 str(num), va='center', fontsize=11, color='black')
+
+    plt.tight_layout()
+    plt.show()
+
+# Reload the data to ensure 'Sentiment Label' column is present
+data = pd.read_csv('Hasil_RobertaBaseSentimentClassifier_normalisasi.csv')
+
+# Ambil data per sentimen
+corpus_neg = data[data['Sentiment Label'] == 'Negatif']['normalisasi'].astype(str).tolist()
+corpus_neu = data[data['Sentiment Label'] == 'Netral']['normalisasi'].astype(str).tolist()
+corpus_pos = data[data['Sentiment Label'] == 'Positif']['normalisasi'].astype(str).tolist()
+
+# ================================================================
+plot_ngrams(corpus_neg, "Negatif", plt.cm.Set1, stopwords=stopword_all)
+plot_ngrams(corpus_neu, "Netral", plt.cm.Set1, stopwords=stopword_all)
+plot_ngrams(corpus_pos, "Positif", plt.cm.Set1, stopwords=stopword_all)
+# ================================================================
+
+from sklearn.feature_extraction.text import CountVectorizer
+import matplotlib.pyplot as plt
+from collections import Counter
+import numpy as np
+
+# Daftar stopwords tambahan
+custom_stopwords = set([
+    'https', 'co', 'rt', '...', 'amp', 'lu', 'deh',
+    'ai', 'berapa', 'can','allahuakbar'
+])
+
+# Fungsi bersihkan teks dari stopwords manual
+def clean_text(text):
+    words = text.split()
+    words = [w for w in words if w.lower() not in custom_stopwords]
+    return " ".join(words)
+
+# Fungsi untuk membuat diagram batang frekuensi n-gram
+def plot_ngram_frequencies(texts, ngram_range=(3,3), top_n=15, cmap=plt.cm.Set3):
+
+    # 1️⃣ Bersihkan stopword dari seluruh korpus
+    cleaned_texts = [clean_text(t) for t in texts]
+
+    # 2️⃣ Vectorizer tanpa stopword lagi (karena sudah dibersihkan)
+    vectorizer = CountVectorizer(ngram_range=ngram_range)
+    X = vectorizer.fit_transform(cleaned_texts)
+
+    # 3️⃣ Hitung total frekuensi ngram
+    ngram_counts = X.sum(axis=0).A1
+    ngram_vocab = vectorizer.get_feature_names_out()
+    freq_dist = dict(zip(ngram_vocab, ngram_counts))
+
+    # 4️⃣ Ambil ngram teratas
+    top_ngrams = Counter(freq_dist).most_common(top_n)
+
+    if not top_ngrams:
+        print("Tidak ada n-gram ditemukan setelah stopword dihapus.")
+        return
+
+    labels, values = zip(*top_ngrams)
+
+    # 5️⃣ Warna untuk setiap bar
+    colors = cmap(np.linspace(0, 1, len(labels)))
+
+    # 6️⃣ Plot
+    plt.figure(figsize=(10, 6))
+    bars = plt.barh(labels[::-1], values[::-1], color=colors[::-1])
+    plt.title(f"Top {top_n} {ngram_range[0]}-gram Frekuensi", fontsize=14)
+    plt.xlabel("Frekuensi")
+
+    # Tambahkan angka
+    for bar in bars:
+        width = bar.get_width()
+        plt.text(width + 0.2, bar.get_y() + bar.get_height()/2,
+                 f'{int(width)}', va='center')
+
+    plt.tight_layout()
+    plt.show()
+
+# Contoh pemanggilan: Trigram
+plot_ngram_frequencies(
+    data['normalisasi'],
+    ngram_range=(3,3),
+    top_n=15,
+    cmap=plt.cm.Set3
+)
