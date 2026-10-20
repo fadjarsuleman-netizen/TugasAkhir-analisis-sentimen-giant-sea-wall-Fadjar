@@ -1,0 +1,10 @@
+def case_folding(text):
+    if isinstance(text, str):
+        lowercase_text = text.lower()
+        return lowercase_text
+    else:
+        return text
+
+df['case_folding'] = df['cleaning'].apply(case_folding)
+df.head(5)
+#melakukan case folding, yaitu mengubah seluruh huruf pada teks komentar menjadi huruf kecil (lowercase) agar penulisan kata menjadi seragam.
