@@ -1,0 +1,54 @@
+!pip install Sastrawi
+from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
+from nltk.stem import PorterStemmer
+from nltk.stem.snowball import SnowballStemmer
+
+factory = StemmerFactory()
+stemmer = factory.create_stemmer()
+def stem_text(text):
+    return [stemmer.stem(word) for word in text]
+df['steming_data'] = df['stopword_removal'].apply(lambda x: ' '.join(stem_text(x)))
+df.head(5)
+
+from collections import Counter
+all_text = ' '.join(df['steming_data'].astype(str))
+all_text = re.sub(r'[^a-zA-Z\s]', '', all_text.lower())
+word_list = all_text.split()
+word_freq = Counter(word_list)
+sorted_freq = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
+df_freq = pd.DataFrame(sorted_freq, columns=['Kata', 'Frekuensi'])
+df_freq.to_csv('frekuensi_kata_awal.csv', index=False)
+print("✅ File 'frekuensi_kata_awal.csv' berhasil disimpan.")
+df_freq.info()
+df_freq.head(50)
+
+hapus_kata = [
+    'ya','iya','nih','sih','tuh','deh','loh','kah',
+    'gue','gua','lo','abang','bang','mbak','kak','kakak',
+    'abah','mah','noh','entar','doang','mulu',
+    'wkwk','wkwkwk','halo','komen','yapping',
+    'koh','mah','the','nih','sih','nih','gue','rk','sia','tau','doel'
+    't','mu','tok','deh','wok','we','the','wi',
+]
+# ================================================================
+# hapus kata dari teks
+df['steming_data'] = df['steming_data'].apply(
+    lambda x: ' '.join([kata for kata in x.split() if kata not in hapus_kata]))
+df['steming_data'].str.contains('|'.join(hapus_kata)).sum()
+# ================================================================
+from collections import Counter
+import re
+
+all_text = ' '.join(df['steming_data'].astype(str))
+all_text = re.sub(r'[^a-zA-Z\s]', '', all_text.lower())
+
+word_list = all_text.split()
+word_freq = Counter(word_list)
+
+sorted_freq = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)
+df_freq = pd.DataFrame(sorted_freq, columns=['Kata', 'Frekuensi'])
+
+# df_freq.info()
+df_freq.head(100)
+# ================================================================
+df['steming_data']
