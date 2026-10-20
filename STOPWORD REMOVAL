@@ -1,0 +1,13 @@
+!pip install nltk==3.8.1
+#menginstal library NLTK (Natural Language Toolkit)
+# ================================================================
+import nltk
+nltk.download('stopwords')
+from nltk.corpus import stopwords
+stop_words = set(stopwords.words('indonesian'))
+stop_words = stopwords.words('indonesian')
+# ================================================================
+def remove_stopwords(text):
+    return [word for word in text if word not in stop_words]
+df['stopword_removal'] = df['tokenize'].apply(lambda x: remove_stopwords(x))
+df.head(5)
