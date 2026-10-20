@@ -1,0 +1,25 @@
+_, data_test, _, _ = train_test_split(X_raw, y_raw, test_size=0.2, random_state=42, stratify=y_raw)
+
+hasil = pd.DataFrame({
+    "Komentar": data_test,
+    "Actual": y_test,
+    "Prediksi": predictions
+})
+
+label_map = {
+    0: "Negatif",
+    1: "Netral",
+    2: "Positif"
+}
+hasil["Actual"] = hasil["Actual"].map(label_map)
+hasil["Prediksi"] = hasil["Prediksi"].map(label_map)
+
+hasil[hasil["Actual"] != hasil["Prediksi"]]
+# ================================================================
+benar = hasil[hasil["Actual"] == hasil["Prediksi"]]
+
+benar.sample(10, random_state=42)
+# ================================================================
+salah = hasil[hasil["Actual"] != hasil["Prediksi"]]
+
+salah.sample(10, random_state=42)
