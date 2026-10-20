@@ -1,0 +1,8 @@
+def tokenize(text):
+    tokens = text.split()
+    return tokens
+
+df['tokenize'] = df['normalisasi'].apply(tokenize)
+
+#tokenisasi, yaitu memecah setiap komentar yang telah melalui tahap normalisasi menjadi beberapa token atau kata.
+df.head(10)
