@@ -1,0 +1,73 @@
+data  = pd.DataFrame(data[['normalisasi']])
+data.info()
+data.head(5)
+
+# ================================================================
+sentiment_pipeline = pipeline(
+    "sentiment-analysis",
+    model="w11wo/indonesian-roberta-base-sentiment-classifier"
+)
+
+def chunk_text(text, max_len=512):
+    return [text[i:i+max_len] for i in range(0, len(text), max_len)]
+
+def robust_sentiment(text):
+    # Ensure the input is treated as a string
+    text = str(text)
+    chunks = chunk_text(text)
+    results = [sentiment_pipeline(chunk)[0] for chunk in chunks]
+
+    # Hitung rata-rata skor untuk label yang paling sering muncul
+    labels = [r["label"] for r in results]
+    scores = [r["score"] for r in results]
+    final_label = max(set(labels), key=labels.count)
+    final_score = sum(scores) / len(scores)
+
+    return {"label": final_label, "score": final_score}
+
+from tqdm.auto import tqdm
+tqdm.pandas()
+
+results = data["normalisasi"].progress_apply(robust_sentiment)
+
+data["Sentiment Label"] = results.apply(lambda x: x["label"])
+data["Sentiment Score"] = results.apply(lambda x: x["score"])
+data.head(20)
+# ================================================================
+
+mapping = {
+    'positive':'Positif',
+    'negative':'Negatif',
+    'neutral':'Netral'
+}
+
+data['Sentiment Label'] = data['Sentiment Label'].replace(mapping)
+
+data  = pd.DataFrame(data[['normalisasi','Sentiment Label']])
+data.head(10)
+
+# ================================================================
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import warnings
+warnings.filterwarnings("ignore")
+
+sentiment_count = data['Sentiment Label'].value_counts()
+sns.set_style('whitegrid')
+
+fig, ax = plt.subplots(figsize=(6, 3))
+ax = sns.barplot(x=sentiment_count.index, y=sentiment_count.values, palette='pastel')
+plt.title('Analisis Sentimen\nProyek Giant Sea Wall', fontsize=10, pad=20)
+plt.xlabel('Class Kategory', fontsize=8)
+plt.ylabel('Jumlah Tweet', fontsize=8)
+
+total = len(data['Sentiment Label'])
+
+for i, count in enumerate(sentiment_count.values):
+    percentage = f'{100 * count / total:.2f}%'
+    ax.text(i, count + 0.10, f'{count}\n({percentage})', ha='center', va='bottom')
+
+plt.show()
+# ================================================================
+data.to_csv('Hasil_RobertaBaseSentimentClassifier_normalisasi.csv',encoding='utf8', index=False)
